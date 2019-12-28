@@ -71,7 +71,7 @@ guard !FileManager.default.fileExists(atPath: folder.path) else { fatalError("Fo
 try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true, attributes: nil)
 for (name, image) in diffs {
     guard let imageData = NSBitmapImageRep(data: image.tiffRepresentation!)?.representation(using: .png, properties: [:]) else { fatalError() }
-    try! imageData.write(to: folder.appendingPathComponent("\(name).png"))
+    try! imageData.write(to: folder.appendingPathComponent(name))
 }
 print("Images saved to \(folder.path)")
 print("Done.")
