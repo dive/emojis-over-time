@@ -140,12 +140,11 @@ DispatchQueue.global().async {
         // Uncomment if you want to slow down the animation of the process in the live preview
         // Thread.sleep(forTimeInterval: 0.1)
 
-        // Bullshit
+        // Save the image
         guard let pngData = image.pngData() else { fatalError("Cannot create png data from the image.") }
         let url = folder.appendingPathComponent("\(emoji.name).png")
         try! pngData.write(to: url)
     }
-
     print("Images saved to \(folder.path)")
     print("Done.")
 }
