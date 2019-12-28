@@ -7,6 +7,10 @@ import PlaygroundSupport
 let previewSize = CGSize(width: 164, height: 164)
 let fontSize: CGFloat = 140
 
+struct Debug {
+    static let showSkipped: Bool = false
+}
+
 class EmojiViewController : UIViewController {
     lazy var imageView: UIImageView = {
         let view = UIImageView()
@@ -37,6 +41,7 @@ class EmojiViewController : UIViewController {
 class EmojisExplorer {
 
     struct Emoji {
+        let hex: String
         let scalar: String
         let name: String
     }
@@ -59,23 +64,45 @@ class EmojisExplorer {
             // Ignore skin tone emoji's variants. Comment the next line out if you are curious about changes within tones.
             guard !line.contains("skin tone") else { return }
             // Mhm, this is a regex... Do not do it on production.
-            // 1 - status, 2 - scalar, 3 - text representation
-            let pattern = #"^(?:(?:.{4,5}\s{1}){1,8})\s{1};\s{1}(\w*-\w*)\s*\W\s{1}([^\s]*)\s{1}E\d{1}\.\d{1}\s{1}(.*)$"#
+            // 1 - hexes, 2 - status, 3 - scalar, 4 - text representation.
+            let pattern = #"^((?:.{4,5}\s{1}){1,8})\s{1};\s{1}(\w*-{0,1}\w*)\s*\W\s{1}([^\s]*)\s{1}E\d{1}\.\d{1}\s{1}(.*)$"#
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { fatalError("Cannot build the regular expression.") }
             let nsrange = NSRange(line.startIndex..<line.endIndex, in: line)
             regex.enumerateMatches(in: line, options: [], range: nsrange) { (match, _, _) in
                 guard let match = match else { return }
-                guard let firstCaptureRange = Range(match.range(at: 1), in: line) else { fatalError("Something is wrong with the range.") }
-                let status = String(line[firstCaptureRange])
+                let hex: String = {
+                    guard let firstCaptureRange = Range(match.range(at: 1), in: line) else { fatalError("Something is wrong with the range.") }
+                    let _hex: String = {
+                        let raw = String(line[firstCaptureRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        let components = raw.components(separatedBy: .whitespacesAndNewlines)
+                        let hexArray = components.map { Int($0, radix: 16)! }
+                        var unicode = String()
+                        hexArray.map { unicode.append(Character(Unicode.Scalar($0)!)) }
+                        return unicode
+                    }()
+                    return _hex
+                }()
+                let status: String = {
+                    guard let secondCaptureRange = Range(match.range(at: 2), in: line) else { fatalError("Something is wrong with the range.") }
+                    return String(line[secondCaptureRange])
+                }()
+                let scalar: String = {
+                    guard let thirdCaptureRange = Range(match.range(at: 3), in: line) else { fatalError("Something is wrong with the range.") }
+                    return String(line[thirdCaptureRange])
+                }()
+                let name: String = {
+                    guard let fourthCaptureRange = Range(match.range(at: 4), in: line) else { fatalError("Something is wrong with the range.") }
+                    var _name = String(line[fourthCaptureRange])
+                    // Replace some characters in the name for better readability and file system requirements
+                    [" ", "”", "“", "\"", "(", ")", ":", ",", "-", "’"].forEach { _name = _name.replacingOccurrences(of: $0, with: "_") }
+                    return _name
+                }()
                 // Do not process unqualified & minimally-qualified emojis (check the "emoji-test.txt" for additional information).
-                guard status == "fully-qualified" else { return }
-                guard let secondCaptureRange = Range(match.range(at: 2), in: line) else { fatalError("Something is wrong with the range.") }
-                guard let thirdCaptureRange = Range(match.range(at: 3), in: line) else { fatalError("Something is wrong with the range.") }
-                let scalar = String(line[secondCaptureRange])
-                var name = String(line[thirdCaptureRange])
-                // Replace some characters in the name for better readability and file system requirements
-                [" ", "”", "“", "\"", "(", ")", ":", ",", "-", "’"].forEach { name = name.replacingOccurrences(of: $0, with: "_") }
-                let emoji = Emoji(scalar: scalar, name: name)
+                guard status == "fully-qualified" else {
+                    if Debug.showSkipped { print("SKIPPED: \(status) \t \(name) \t \(scalar)") }
+                    return
+                }
+                let emoji = Emoji(hex: hex, scalar: scalar, name: name)
                 emojis.append(emoji)
             }
         }
@@ -108,10 +135,9 @@ DispatchQueue.global().async {
     guard !FileManager.default.fileExists(atPath: folder.path) else { fatalError("Folder \(folder.path) already exists. Delete it to record again.") }
     try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true, attributes: nil)
     for emoji in emojis {
-        guard let image = emoji.scalar.image() else { fatalError("Cannot create an image.") }
-        print(emoji.name)
+        guard let image = emoji.hex.image() else { fatalError("Cannot create an image.") }
         DispatchQueue.main.async { emojiViewController.show(image) }
-        // Uncomment if you want to see an animation of the process in the live preview
+        // Uncomment if you want to slow down the animation of the process in the live preview
         // Thread.sleep(forTimeInterval: 0.1)
 
         // Bullshit
