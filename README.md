@@ -1,14 +1,16 @@
-# emojis-over-time
+# Overview
 
-## Why?
+You can generated and compare emojis between iOS versions with the information below and playgrounds stored in the repository.
+
+# Why?
 
 Once, I noticed that one of the emojis has changed between iOS versions in a strange way. And it was Friday. So, I decided that I want to see all the changes in emojis for iOS 13.*. That's how this repository were born.
 
-## How it works
+# How it works
 
 There are two playground in the repository. First one for generating snapshots from emojis, the second to compare them and generate previews.
 
-### SnapshotProducer.playground
+## SnapshotProducer.playground
 
 This one is iOS Playground. The main responsibility is to generate snapshots for all available emojis. 
 
@@ -30,7 +32,7 @@ As a result, you will have snapshot images for all qualified emojis.
 
 **Important Note**: Xcode Playgrounds for iOS use the default device support (iOS SDK version) shipped with Xcode. To generate emoji snapshots for different iOS version you have to install different Xcode versions and re-run the playground. All snapshots stored in the directory with the system version of iOS they were generated for.
 
-### SnapshotComparison.playground
+## SnapshotComparison.playground
 
 This one is macOS Playground. The main responsibility is to compare snapshots generated with the playground above and produce images with diffs.
 
@@ -42,9 +44,9 @@ How does it work:
 * All the diffs will be stored in the temp directory inside the directory with the name like `13.1->13.2` that reflects the iOS versions you are comparing;
 * The path to the directory will be printed to the log.
 
-<img src="emojis_diff/13.1-%3E13.2/person_getting_haircut.png" width="100">
+<img src="emojis_diff/13.1-%3E13.2/person_getting_haircut.png" width="250">
 
-## How to generate and compare
+# How to generate and compare
 
 You have to use both playground to produce diffs:
 
